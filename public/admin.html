@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin · Alerta Condominio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --rojo:#ff1a1a; --bg:#0a0a0a; --surface:#141414;
+      --surface2:#1e1e1e; --text:#f0f0f0; --text-dim:#888;
+      --verde:#00e676; --border:#2a2a2a;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'Noto Sans KR',sans-serif; min-height:100vh; }
+
+    .topbar {
+      background:var(--surface); border-bottom:1px solid var(--border);
+      padding:1rem 2rem; display:flex; align-items:center; gap:1rem;
+    }
+    .topbar h1 { font-family:'Black Han Sans',sans-serif; font-size:1.2rem; color:var(--rojo); letter-spacing:2px; }
+    .topbar span { color:var(--text-dim); font-size:0.8rem; }
+
+    .container { max-width:900px; margin:0 auto; padding:2rem; display:flex; flex-direction:column; gap:2rem; }
+
+    /* INSTRUCCIONES */
+    .instrucciones {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px;
+      padding:1.5rem; display:flex; flex-direction:column; gap:0.8rem;
+    }
+    .instrucciones h2 { font-size:0.9rem; color:var(--rojo); text-transform:uppercase; letter-spacing:2px; }
+    .instrucciones ol { padding-left:1.2rem; display:flex; flex-direction:column; gap:0.5rem; }
+    .instrucciones li { font-size:0.85rem; color:var(--text-dim); line-height:1.6; }
+    .instrucciones code {
+      background:var(--surface2); padding:0.15rem 0.4rem; border-radius:4px;
+      font-size:0.8rem; color:var(--verde); font-family:monospace;
+    }
+
+    /* EDITOR JSON */
+    .panel {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.5rem;
+      display:flex; flex-direction:column; gap:1rem;
+    }
+    .panel h2 { font-family:'Black Han Sans',sans-serif; font-size:1rem; letter-spacing:2px; }
+
+    /* TABLA VECINOS */
+    .tabla-header {
+      display:grid; grid-template-columns:80px 1fr 160px 100px;
+      gap:0.5rem; padding:0.6rem 0.8rem;
+      font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;
+    }
+    .vecino-row {
+      display:grid; grid-template-columns:80px 1fr 160px 100px;
+      gap:0.5rem; padding:0.7rem 0.8rem;
+      background:var(--surface2); border-radius:10px; margin-bottom:0.4rem;
+      align-items:center;
+    }
+    .vecino-row input {
+      background:transparent; border:none; border-bottom:1px solid #333;
+      color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:0.9rem;
+      padding:0.2rem 0.3rem; outline:none; width:100%;
+    }
+    .vecino-row input:focus { border-bottom-color:var(--rojo); }
+    .btn-del {
+      background:transparent; border:1px solid #333; border-radius:6px;
+      color:var(--text-dim); padding:0.3rem 0.6rem; cursor:pointer; font-size:0.8rem;
+    }
+    .btn-del:hover { border-color:var(--rojo); color:var(--rojo); }
+
+    .row-acciones { display:flex; gap:0.8rem; flex-wrap:wrap; }
+
+    .btn {
+      border:none; border-radius:10px; padding:0.7rem 1.2rem;
+      font-size:0.85rem; cursor:pointer; font-family:'Noto Sans KR',sans-serif;
+      font-weight:700; letter-spacing:0.5px; transition:transform 0.1s;
+    }
+    .btn:active { transform:scale(0.97); }
+    .btn-add { background:var(--surface2); color:var(--text); border:1px solid #333; }
+    .btn-generar { background:var(--rojo); color:white; }
+    .btn-copy { background:var(--verde); color:#000; }
+
+    /* OUTPUT JSON */
+    .json-output {
+      background:var(--surface2); border-radius:12px; padding:1rem;
+      font-family:monospace; font-size:0.78rem; color:var(--verde);
+      white-space:pre-wrap; word-break:break-all; max-height:300px;
+      overflow-y:auto; border:1px solid #333; display:none;
+    }
+    .json-output.show { display:block; }
+
+    .aviso {
+      background:#1a1a0a; border:1px solid #444400; border-radius:10px;
+      padding:1rem; font-size:0.8rem; color:#cccc00; line-height:1.6;
+    }
+
+    .counter {
+      font-size:0.75rem; color:var(--text-dim);
+    }
+    .counter strong { color:var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🛡 ADMIN</h1>
+  <span>Panel de gestión de vecinos · Condominio</span>
+</div>
+
+<div class="container">
+
+  <div class="instrucciones">
+    <h2>📋 Cómo agregar vecinos</h2>
+    <ol>
+      <li>Agrega cada vecino con su parcela, nombre y teléfono (formato <code>+569XXXXXXXX</code>)</li>
+      <li>Haz clic en <strong>Generar JSON</strong> y luego <strong>Copiar</strong></li>
+      <li>Ve a tu proyecto en <strong>Vercel → Settings → Environment Variables</strong></li>
+      <li>Crea la variable <code>VECINOS</code> y pega el JSON copiado</li>
+      <li>Crea también <code>PANIC_PIN</code> con el PIN que tú decidas (4 dígitos)</li>
+      <li>Haz <strong>Redeploy</strong> en Vercel para que los cambios tengan efecto</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>👥 VECINOS</h2>
+      <span class="counter">Total: <strong id="contador">0</strong> vecinos</span>
+    </div>
+
+    <div class="tabla-header">
+      <span>Parcela</span>
+      <span>Nombre</span>
+      <span>Teléfono</span>
+      <span>Acción</span>
+    </div>
+
+    <div id="lista-vecinos"></div>
+
+    <div class="row-acciones">
+      <button class="btn btn-add" onclick="agregarVecino()">+ Agregar vecino</button>
+      <button class="btn btn-generar" onclick="generarJSON()">⚙ Generar JSON</button>
+      <button class="btn btn-copy" id="btn-copy" onclick="copiarJSON()" style="display:none">📋 Copiar</button>
+    </div>
+
+    <div class="aviso">
+      ⚠️ <strong>Importante:</strong> Los teléfonos deben incluir el código de país. Para Chile usa el formato <code>+569XXXXXXXX</code>. Asegúrate de que cada vecino haya dado su consentimiento para recibir llamadas de emergencia.
+    </div>
+
+    <div class="json-output" id="json-output"></div>
+  </div>
+
+</div>
+
+<script>
+  let vecinos = JSON.parse(localStorage.getItem('admin_vecinos') || '[]');
+  if (vecinos.length === 0) {
+    // Ejemplo inicial con parcela 70 (Fabian)
+    vecinos = [
+      { parcela: '70', nombre: 'Fabian', telefono: '+56900000000' }
+    ];
+  }
+
+  function render() {
+    const cont = document.getElementById('lista-vecinos');
+    cont.innerHTML = '';
+    vecinos.forEach((v, i) => {
+      const row = document.createElement('div');
+      row.className = 'vecino-row';
+      row.innerHTML = `
+        <input type="number" value="${v.parcela}" placeholder="Nº" onchange="update(${i},'parcela',this.value)" min="1"/>
+        <input type="text"   value="${v.nombre}"  placeholder="Nombre completo" onchange="update(${i},'nombre',this.value)"/>
+        <input type="tel"    value="${v.telefono}" placeholder="+56900000000" onchange="update(${i},'telefono',this.value)"/>
+        <button class="btn-del" onclick="eliminar(${i})">🗑 Quitar</button>
+      `;
+      cont.appendChild(row);
+    });
+    document.getElementById('contador').textContent = vecinos.length;
+    guardar();
+  }
+
+  function update(i, campo, val) {
+    vecinos[i][campo] = val;
+    guardar();
+  }
+
+  function guardar() {
+    localStorage.setItem('admin_vecinos', JSON.stringify(vecinos));
+  }
+
+  function agregarVecino() {
+    vecinos.push({ parcela: '', nombre: '', telefono: '' });
+    render();
+  }
+
+  function eliminar(i) {
+    if (!confirm(`¿Eliminar a ${vecinos[i].nombre || 'este vecino'}?`)) return;
+    vecinos.splice(i, 1);
+    render();
+  }
+
+  function generarJSON() {
+    const validos = vecinos.filter(v => v.parcela && v.telefono);
+    if (validos.length === 0) return alert('Agrega al menos un vecino con parcela y teléfono');
+    const json = JSON.stringify(validos);
+    const output = document.getElementById('json-output');
+    output.textContent = json;
+    output.classList.add('show');
+    document.getElementById('btn-copy').style.display = 'inline-block';
+  }
+
+  function copiarJSON() {
+    const text = document.getElementById('json-output').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = '✅ Copiado';
+      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
