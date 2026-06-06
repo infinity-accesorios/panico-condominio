@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0a0a0a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="apple-mobile-web-app-title" content="Alerta"/>
+  <title>🚨 Alerta Condominio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --rojo: #ff1a1a;
+      --rojo-dark: #cc0000;
+      --rojo-glow: rgba(255,26,26,0.4);
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --text: #f0f0f0;
+      --text-dim: #888;
+      --verde: #00e676;
+      --amarillo: #ffea00;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* PANTALLA DE CONFIGURACIÓN */
+    #pantalla-config {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      gap: 1.5rem;
+    }
+
+    #pantalla-config h1 {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 1.8rem;
+      color: var(--rojo);
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    #pantalla-config p {
+      color: var(--text-dim);
+      text-align: center;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .config-box {
+      width: 100%;
+      max-width: 360px;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border: 1px solid #2a2a2a;
+    }
+
+    .config-box label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .config-box input {
+      background: var(--surface2);
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .config-box input:focus {
+      border-color: var(--rojo);
+    }
+
+    .config-box input[type="number"] {
+      font-size: 1.4rem;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 4px;
+    }
+
+    .btn-guardar {
+      background: var(--rojo);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer;
+      width: 100%;
+      letter-spacing: 1px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-guardar:active { transform: scale(0.97); }
+
+    /* PANTALLA PRINCIPAL */
+    #pantalla-main {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.2rem;
+      background: var(--surface);
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .header-parcela {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-parcela span:first-child {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .header-parcela span:last-child {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 1.3rem;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    .btn-config-mini {
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: var(--text-dim);
+      padding: 0.5rem 0.8rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    /* ÁREA CENTRAL */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      gap: 2rem;
+      position: relative;
+    }
+
+    /* ANILLOS PULSANTES */
+    .ring-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid var(--rojo);
+      opacity: 0;
+      animation: pulse-ring 2.5s ease-out infinite;
+    }
+
+    .ring:nth-child(1) { width: 220px; height: 220px; animation-delay: 0s; }
+    .ring:nth-child(2) { width: 270px; height: 270px; animation-delay: 0.6s; }
+    .ring:nth-child(3) { width: 320px; height: 320px; animation-delay: 1.2s; }
+
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.8); opacity: 0.6; }
+      100% { transform: scale(1.1); opacity: 0; }
+    }
+
+    /* BOTÓN PÁNICO */
+    .btn-panico {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ff4444, var(--rojo-dark));
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      position: relative;
+      z-index: 2;
+      box-shadow:
+        0 0 0 6px rgba(255,26,26,0.15),
+        0 0 40px var(--rojo-glow),
+        inset 0 -4px 12px rgba(0,0,0,0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .btn-panico:active {
+      transform: scale(0.93);
+      box-shadow:
+        0 0 0 3px rgba(255,26,26,0.2),
+        0 0 20px var(--rojo-glow),
+        inset 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .btn-panico .icono {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .btn-panico .texto {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 0.9rem;
+      color: white;
+      letter-spacing: 3px;
+      opacity: 0.9;
+    }
+
+    .instruccion {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* FOOTER STATUS */
+    .footer-status {
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-top: 1px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--verde);
+      box-shadow: 0 0 6px var(--verde);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .status-text {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* MODAL DE CONFIRMACIÓN */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 340px;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .modal-icon { font-size: 3rem; text-align: center; }
+
+    .modal h2 {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 1.4rem;
+      color: var(--rojo);
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .modal p {
+      color: var(--text-dim);
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .modal-pin {
+      background: var(--surface2);
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 0.9rem;
+      color: var(--text);
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 8px;
+      font-family: monospace;
+      width: 100%;
+      outline: none;
+    }
+
+    .modal-pin:focus { border-color: var(--rojo); }
+
+    .modal-btns {
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .btn-cancelar {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid #333;
+      border-radius: 12px;
+      color: var(--text-dim);
+      padding: 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .btn-confirmar {
+      flex: 2;
+      background: var(--rojo);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      padding: 1rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .btn-confirmar:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+
+    /* ESTADO ENVIANDO */
+    #pantalla-enviando {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    #pantalla-enviando.show { display: flex; }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid #2a2a2a;
+      border-top-color: var(--rojo);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #pantalla-enviando h2 {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 1.5rem;
+      color: var(--rojo);
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    #pantalla-enviando p {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    /* RESULTADO */
+    #pantalla-resultado {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+
+    #pantalla-resultado.show { display: flex; }
+
+    .resultado-icono { font-size: 5rem; }
+
+    #pantalla-resultado h2 {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 1.6rem;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    #pantalla-resultado p {
+      color: var(--text-dim);
+      text-align: center;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .btn-volver {
+      background: var(--surface);
+      border: 1px solid #333;
+      border-radius: 12px;
+      color: var(--text);
+      padding: 1rem 2rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- PANTALLA CONFIGURACIÓN -->
+<div id="pantalla-config">
+  <h1>🚨 ALERTA<br/>CONDOMINIO</h1>
+  <p>Configura tu parcela y un PIN de seguridad<br/>para activar las alertas de emergencia.</p>
+  <div class="config-box">
+    <label>Tu número de parcela</label>
+    <input type="number" id="input-parcela" placeholder="70" min="1" max="999"/>
+    <label>Tu nombre (opcional)</label>
+    <input type="text" id="input-nombre" placeholder="Ej: Juan Pérez"/>
+    <label>PIN de seguridad (4 dígitos)</label>
+    <input type="password" id="input-pin" placeholder="••••" maxlength="4" inputmode="numeric"/>
+    <label>URL de tu API (Vercel)</label>
+    <input type="url" id="input-api" placeholder="https://tu-proyecto.vercel.app"/>
+    <button class="btn-guardar" onclick="guardarConfig()">Guardar y continuar →</button>
+  </div>
+</div>
+
+<!-- PANTALLA PRINCIPAL -->
+<div id="pantalla-main">
+  <div class="header">
+    <div class="header-parcela">
+      <span>Identificado como</span>
+      <span id="label-parcela">Parcela —</span>
+    </div>
+    <button class="btn-config-mini" onclick="mostrarConfig()">⚙ Editar</button>
+  </div>
+
+  <div class="main-area">
+    <div class="ring-container">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <button class="btn-panico" onclick="abrirModal()">
+        <span class="icono">🆘</span>
+        <span class="texto">PÁNICO</span>
+      </button>
+    </div>
+    <p class="instruccion">Presiona el botón en caso de<br/>emergencia real únicamente.<br/>Se llamará a <strong>todos los vecinos</strong>.</p>
+  </div>
+
+  <div class="footer-status">
+    <div class="status-dot"></div>
+    <span class="status-text">Sistema activo · Condominio conectado</span>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <h2>¿CONFIRMAR<br/>ALERTA?</h2>
+    <p>Se realizará una <strong>llamada telefónica</strong> a todos los vecinos del condominio indicando que la <strong id="modal-parcela-label">Parcela —</strong> necesita ayuda urgente.</p>
+    <input type="password" class="modal-pin" id="modal-pin" placeholder="PIN" maxlength="4" inputmode="numeric"/>
+    <div class="modal-btns">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirmar" id="btn-confirmar" onclick="enviarAlerta()">🚨 ALERTAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA ENVIANDO -->
+<div id="pantalla-enviando">
+  <div class="spinner"></div>
+  <h2>ALERTANDO...</h2>
+  <p>Llamando a todos los vecinos del condominio</p>
+</div>
+
+<!-- PANTALLA RESULTADO -->
+<div id="pantalla-resultado">
+  <div class="resultado-icono" id="resultado-icono">✅</div>
+  <h2 id="resultado-titulo">ALERTA ENVIADA</h2>
+  <p id="resultado-desc">Las llamadas fueron iniciadas correctamente.</p>
+  <button class="btn-volver" onclick="volverMain()">Volver al inicio</button>
+</div>
+
+<script>
+  const API_URL_KEY  = 'panico_api_url';
+  const PARCELA_KEY  = 'panico_parcela';
+  const NOMBRE_KEY   = 'panico_nombre';
+  const PIN_KEY      = 'panico_pin';
+
+  function guardarConfig() {
+    const parcela = document.getElementById('input-parcela').value.trim();
+    const nombre  = document.getElementById('input-nombre').value.trim();
+    const pin     = document.getElementById('input-pin').value.trim();
+    const api     = document.getElementById('input-api').value.trim();
+
+    if (!parcela) return alert('Ingresa tu número de parcela');
+    if (pin.length !== 4 || isNaN(pin)) return alert('El PIN debe ser de 4 dígitos numéricos');
+    if (!api) return alert('Ingresa la URL de tu API');
+
+    localStorage.setItem(PARCELA_KEY, parcela);
+    localStorage.setItem(NOMBRE_KEY, nombre);
+    localStorage.setItem(PIN_KEY, pin);
+    localStorage.setItem(API_URL_KEY, api);
+
+    mostrarMain();
+  }
+
+  function mostrarMain() {
+    const parcela = localStorage.getItem(PARCELA_KEY);
+    const nombre  = localStorage.getItem(NOMBRE_KEY);
+    document.getElementById('label-parcela').textContent = `Parcela ${parcela}${nombre ? ' · ' + nombre : ''}`;
+    document.getElementById('modal-parcela-label').textContent = `Parcela ${parcela}`;
+    document.getElementById('pantalla-config').style.display = 'none';
+    document.getElementById('pantalla-main').style.display = 'flex';
+  }
+
+  function mostrarConfig() {
+    const parcela = localStorage.getItem(PARCELA_KEY) || '';
+    const nombre  = localStorage.getItem(NOMBRE_KEY)  || '';
+    const pin     = localStorage.getItem(PIN_KEY)     || '';
+    const api     = localStorage.getItem(API_URL_KEY) || '';
+    document.getElementById('input-parcela').value = parcela;
+    document.getElementById('input-nombre').value  = nombre;
+    document.getElementById('input-pin').value     = pin;
+    document.getElementById('input-api').value     = api;
+    document.getElementById('pantalla-main').style.display = 'none';
+    document.getElementById('pantalla-config').style.display = 'flex';
+  }
+
+  function abrirModal() {
+    document.getElementById('modal-pin').value = '';
+    document.getElementById('modal-overlay').classList.add('show');
+    setTimeout(() => document.getElementById('modal-pin').focus(), 100);
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+
+  async function enviarAlerta() {
+    const pin     = document.getElementById('modal-pin').value.trim();
+    const pinSave = localStorage.getItem(PIN_KEY);
+    const parcela = localStorage.getItem(PARCELA_KEY);
+    const nombre  = localStorage.getItem(NOMBRE_KEY);
+    const apiUrl  = localStorage.getItem(API_URL_KEY);
+
+    if (pin !== pinSave) {
+      document.getElementById('modal-pin').style.borderColor = '#ff1a1a';
+      document.getElementById('modal-pin').value = '';
+      document.getElementById('modal-pin').placeholder = 'PIN incorrecto';
+      setTimeout(() => {
+        document.getElementById('modal-pin').style.borderColor = '#333';
+        document.getElementById('modal-pin').placeholder = 'PIN';
+      }, 1500);
+      return;
+    }
+
+    cerrarModal();
+    document.getElementById('pantalla-enviando').classList.add('show');
+
+    try {
+      const res = await fetch(`${apiUrl}/api/alerta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parcela, nombre, pin })
+      });
+
+      const data = await res.json();
+      document.getElementById('pantalla-enviando').classList.remove('show');
+
+      if (data.ok) {
+        document.getElementById('resultado-icono').textContent = '✅';
+        document.getElementById('resultado-titulo').textContent = 'ALERTA ENVIADA';
+        document.getElementById('resultado-desc').textContent =
+          `Se iniciaron ${data.llamadas} llamadas telefónicas a los vecinos del condominio.\n\nParcela ${parcela} registrada como origen de la alerta.`;
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (err) {
+      document.getElementById('pantalla-enviando').classList.remove('show');
+      document.getElementById('resultado-icono').textContent = '❌';
+      document.getElementById('resultado-titulo').textContent = 'ERROR';
+      document.getElementById('resultado-desc').textContent = `No se pudo enviar la alerta:\n${err.message}\n\nVerifica tu conexión e intenta nuevamente.`;
+    }
+
+    document.getElementById('pantalla-resultado').classList.add('show');
+  }
+
+  function volverMain() {
+    document.getElementById('pantalla-resultado').classList.remove('show');
+  }
+
+  // Inicializar
+  window.addEventListener('load', () => {
+    const parcela = localStorage.getItem(PARCELA_KEY);
+    const pin     = localStorage.getItem(PIN_KEY);
+    const api     = localStorage.getItem(API_URL_KEY);
+    if (parcela && pin && api) {
+      mostrarMain();
+    }
+  });
+</script>
+</body>
+</html>
