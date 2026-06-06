@@ -1,0 +1,8 @@
+{
+  "name": "panico-condominio",
+  "version": "1.0.0",
+  "description": "Sistema de alerta de pánico para condominio",
+  "dependencies": {
+    "twilio": "^4.23.0"
+  }
+}
